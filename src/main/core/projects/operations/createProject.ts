@@ -71,6 +71,7 @@ export async function createLocalProject(params: CreateLocalProjectParams): Prom
     name: row.name,
     path: row.path,
     baseRef: row.baseRef ?? gitInfo.baseRef,
+    iconDataUrl: null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -138,6 +139,7 @@ export async function createSshProject(params: CreateSshProjectParams): Promise<
     path: row.path,
     connectionId: params.connectionId,
     baseRef: row.baseRef ?? gitInfo.baseRef,
+    iconDataUrl: null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
