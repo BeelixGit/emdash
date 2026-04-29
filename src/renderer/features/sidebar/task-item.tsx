@@ -1,4 +1,5 @@
 import { observer } from 'mobx-react-lite';
+import type { AgentProviderId } from '@shared/agent-provider-registry';
 import { selectCurrentPr } from '@shared/pull-requests';
 import { TaskSidebarAgentStatus } from '@renderer/features/sidebar/task-sidebar-agent-status';
 import { TaskContextMenu } from '@renderer/features/tasks/components/task-context-menu';
@@ -8,13 +9,16 @@ import {
   asProvisioned,
   getTaskManagerStore,
   getTaskStore,
+  taskAgentStatus,
 } from '@renderer/features/tasks/stores/task-selectors';
+import AgentLogo from '@renderer/lib/components/agent-logo';
 import {
   useNavigate,
   useParams,
   useWorkspaceSlots,
 } from '@renderer/lib/layout/navigation-provider';
 import { useShowModal } from '@renderer/lib/modal/modal-provider';
+import { agentConfig } from '@renderer/utils/agentConfig';
 import { cn } from '@renderer/utils/utils';
 import { PrBadge } from '../../lib/components/pr-badge';
 import { SidebarMenuRow } from './sidebar-primitives';
@@ -49,6 +53,16 @@ export const SidebarTaskItem = observer(function SidebarTaskItem({
       (task.phase === 'provision' || task.phase === 'provision-error'));
 
   const taskName = task.data.name;
+
+  // Primary agent (most-used in this task) + active-state, for the leading logo.
+  // The status indicator on the row's right side already conveys *what's happening*;
+  // this logo conveys *which agent* is doing it. Greyed out when not actively working.
+  const primaryProviderId = Object.entries(task.conversationStats).sort(
+    ([, a], [, b]) => b - a
+  )[0]?.[0] as AgentProviderId | undefined;
+  const primaryAgent = primaryProviderId ? agentConfig[primaryProviderId] : undefined;
+  const status = taskAgentStatus(task);
+  const isAgentLive = status === 'working' || status === 'awaiting-input';
 
   const handleProvision = () => {
     if (task.state !== 'unprovisioned' || task.phase !== 'idle') return;
@@ -103,7 +117,17 @@ export const SidebarTaskItem = observer(function SidebarTaskItem({
           navigate('task', { projectId, taskId });
         }}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-1 self-stretch overflow-hidden">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 self-stretch overflow-hidden">
+          {primaryAgent ? (
+            <AgentLogo
+              logo={primaryAgent.logo}
+              alt={primaryAgent.alt}
+              isSvg={primaryAgent.isSvg}
+              invertInDark={primaryAgent.invertInDark}
+              grayscale={!isAgentLive}
+              className="h-3.5 w-3.5 shrink-0 transition-[filter] duration-150"
+            />
+          ) : null}
           <span
             className={cn(
               'min-w-0 truncate text-left transition-colors',
