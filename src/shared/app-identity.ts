@@ -1,6 +1,15 @@
 type ImportMetaWithEnv = ImportMeta & { env?: { VITE_BUILD?: string } };
 
-const buildVariant = (import.meta as ImportMetaWithEnv).env?.VITE_BUILD;
+// Resolve in both contexts:
+//   - Vite-bundled main/renderer: `import.meta.env.VITE_BUILD` is REPLACED at
+//     build time with the literal string from the env when electron-vite ran.
+//   - electron-builder.config.ts (plain Node, not Vite-processed): falls
+//     through to process.env, which the parent shell sets via package:fork:mac.
+//   - Renderer at runtime (sandboxed, no process global): the typeof guard
+//     prevents a ReferenceError; falls through to undefined safely.
+const buildVariant: string | undefined =
+  (import.meta as ImportMetaWithEnv).env?.VITE_BUILD ??
+  (typeof process !== 'undefined' ? process.env?.VITE_BUILD : undefined);
 const isCanary = buildVariant === 'canary';
 export const IS_FORK_BUILD = buildVariant === 'fork';
 
