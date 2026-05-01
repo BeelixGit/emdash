@@ -3,7 +3,7 @@ import _electronUpdater, {
   type UpdateInfo,
   type Logger as UpdaterLogger,
 } from 'electron-updater';
-import { UPDATE_CHANNEL } from '@shared/app-identity';
+import { IS_FORK_BUILD, UPDATE_CHANNEL } from '@shared/app-identity';
 import {
   updateAvailableEvent,
   updateCheckingEvent,
@@ -69,6 +69,14 @@ class UpdateService implements IInitializable, IDisposable {
     this.updateState.currentVersion = await resolveAppVersion();
 
     if (import.meta.env.DEV) return;
+
+    // Fork builds are managed by the local sync-fork.sh script (rebase, rebuild,
+    // reinstall) — never let the upstream auto-updater run, since it would
+    // overwrite the fork build with an upstream release.
+    if (IS_FORK_BUILD) {
+      log.info('AutoUpdateService disabled (fork build)');
+      return;
+    }
 
     this.setupAutoUpdater();
     this.setupEventListeners();
