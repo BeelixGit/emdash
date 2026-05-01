@@ -22,7 +22,7 @@
     "build:renderer": "electron-vite build --filter renderer",
     "package": "pnpm run build && electron-builder --config electron-builder.config.ts",
     "package:mac": "pnpm run build && electron-builder --mac --config electron-builder.config.ts",
-    "package:fork:mac": "VITE_BUILD=fork pnpm run build && electron-builder --mac --publish never --config electron-builder.config.ts",
+    "package:fork:mac": "VITE_BUILD=fork pnpm run build && VITE_BUILD=fork electron-builder --mac --publish never --config electron-builder.config.ts",
     "package:linux": "pnpm run build && electron-builder --linux --publish never --config electron-builder.config.ts",
     "package:win": "pnpm run build && electron-builder --win --publish never --config electron-builder.config.ts",
     "postinstall": "node --experimental-strip-types scripts/postinstall.ts",
