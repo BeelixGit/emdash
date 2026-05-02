@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { app } from 'electron';
+import { IS_FORK_BUILD } from '@shared/app-identity';
 import type { TelemetryEnvelope, TelemetryEvent, TelemetryProperties } from '@shared/telemetry';
 import { KV } from '@main/db/kv';
 import { env as appEnv } from '@main/lib/env';
@@ -261,6 +262,13 @@ async function checkDailyActiveUser(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 export async function init(options?: InitOptions): Promise<void> {
+  // Fork builds never report telemetry — the upstream PostHog account is
+  // theirs, and even no-op'd calls (missing API key) would still hit their
+  // ingest endpoint. Hard-disable to avoid polluting their analytics.
+  if (IS_FORK_BUILD) {
+    enabled = false;
+    return;
+  }
   const enabledEnv = (appEnv.runtime.TELEMETRY_ENABLED ?? 'true').toLowerCase();
   enabled = !isViteDevBuild && enabledEnv !== 'false' && enabledEnv !== '0' && enabledEnv !== 'no';
   // build value wins (prod); dev fallback used locally without VITE_ vars set
